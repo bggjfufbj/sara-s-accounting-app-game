@@ -1,0 +1,217 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // ==================== PRIMITIVE HELPERS ====================
+
+    function isValidId(id) {
+      return id is string
+        && id.size() >= 1
+        && id.size() <= 128
+        && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidShortId(id) {
+      return id is string
+        && id.size() >= 1
+        && id.size() <= 64
+        && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      return isVerified() && (
+        request.auth.token.email == 'rawandhalabjay90@gmail.com'
+        || exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isValidMode(mode) {
+      return mode is string
+        && mode.size() <= 32
+        && mode in ['mcq', 'journal_entry', 'debit_credit', 'classify', 'equation', 'true_false'];
+    }
+
+    function isValidDifficulty(difficulty) {
+      return difficulty is string
+        && difficulty.size() <= 16
+        && difficulty in ['easy', 'hard'];
+    }
+
+    function isValidQuestionCore(data) {
+      return isValidShortId(data.id)
+        && isValidMode(data.mode)
+        && isValidDifficulty(data.difficulty)
+        && data.topic is string && data.topic.size() >= 1 && data.topic.size() <= 160
+        && data.timeLimitSec is number && data.timeLimitSec >= 10 && data.timeLimitSec <= 120
+        && data.ruleHint is string && data.ruleHint.size() <= 600
+        && data.explanation is string && data.explanation.size() <= 800
+        && data.questionData is map
+        && data.questionData.keys().size() >= 1
+        && data.questionData.keys().size() <= 16
+        && data.ownerId is string && isValidId(data.ownerId)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidCurriculumOverride(data, questionId) {
+      return data.keys().hasAll([
+          'id', 'mode', 'difficulty', 'topic', 'timeLimitSec',
+          'ruleHint', 'explanation', 'questionData', 'isPublished',
+          'ownerId', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'mode', 'difficulty', 'topic', 'timeLimitSec',
+          'ruleHint', 'explanation', 'questionData', 'isPublished',
+          'ownerId', 'createdAt', 'updatedAt'
+        ])
+        && data.id == questionId
+        && data.isPublished is bool
+        && data.isPublished == true
+        && isValidQuestionCore(data);
+    }
+
+    function isValidTeacherOverride(data) {
+      return data.keys().hasAll([
+          'id', 'mode', 'difficulty', 'topic', 'timeLimitSec',
+          'ruleHint', 'explanation', 'questionData',
+          'ownerId', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'mode', 'difficulty', 'topic', 'timeLimitSec',
+          'ruleHint', 'explanation', 'questionData',
+          'ownerId', 'createdAt', 'updatedAt'
+        ])
+        && data.ownerId == request.auth.uid
+        && isValidQuestionCore(data);
+    }
+
+    function isValidTeacherCustomQuestion(data) {
+      return data.keys().hasAll([
+          'id', 'mode', 'difficulty', 'topic', 'timeLimitSec',
+          'ruleHint', 'explanation', 'questionData', 'sortOrder',
+          'ownerId', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'mode', 'difficulty', 'topic', 'timeLimitSec',
+          'ruleHint', 'explanation', 'questionData', 'sortOrder',
+          'ownerId', 'createdAt', 'updatedAt'
+        ])
+        && data.sortOrder is number && data.sortOrder >= 0 && data.sortOrder <= 1000
+        && data.ownerId == request.auth.uid
+        && isValidQuestionCore(data);
+    }
+
+    // ==================== COLLECTION 1: PUBLISHED CURRICULUM OVERRIDES ====================
+    // Publicly readable accounting syllabus overrides (zero PII); writable strictly by verified admin.
+    match /curriculum_overrides/{questionId} {
+      allow get: if isValidId(questionId) && existing().isPublished == true;
+      allow list: if resource.data.isPublished == true;
+
+      allow create: if isSignedIn()
+        && isValidId(questionId)
+        && isValidCurriculumOverride(incoming(), questionId)
+        && incoming().ownerId == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && isAdmin();
+
+      allow update: if isSignedIn()
+        && isValidId(questionId)
+        && isValidCurriculumOverride(incoming(), questionId)
+        && incoming().id == existing().id
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'mode', 'difficulty', 'topic', 'timeLimitSec',
+          'ruleHint', 'explanation', 'questionData', 'isPublished', 'updatedAt'
+        ])
+        && isAdmin();
+
+      allow delete: if isSignedIn() && isValidId(questionId) && isAdmin();
+    }
+
+    // ==================== COLLECTION 2: PRIVATE TEACHER CURRICULUM OVERRIDES ====================
+    match /teacher_overrides/{docId} {
+      allow get: if isVerified() && isValidId(docId) && existing().ownerId == request.auth.uid;
+      allow list: if isVerified() && resource.data.ownerId == request.auth.uid;
+
+      allow create: if isVerified()
+        && isValidId(docId)
+        && isValidTeacherOverride(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      allow update: if isVerified()
+        && isValidId(docId)
+        && isValidTeacherOverride(incoming())
+        && existing().ownerId == request.auth.uid
+        && incoming().id == existing().id
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'mode', 'difficulty', 'topic', 'timeLimitSec',
+          'ruleHint', 'explanation', 'questionData', 'updatedAt'
+        ]);
+
+      allow delete: if isVerified() && isValidId(docId) && existing().ownerId == request.auth.uid;
+    }
+
+    // ==================== COLLECTION 3: PRIVATE TEACHER CUSTOM QUESTIONS ====================
+    match /teacher_custom_questions/{docId} {
+      allow get: if isVerified() && isValidId(docId) && existing().ownerId == request.auth.uid;
+      allow list: if isVerified() && resource.data.ownerId == request.auth.uid;
+
+      allow create: if isVerified()
+        && isValidId(docId)
+        && isValidTeacherCustomQuestion(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      allow update: if isVerified()
+        && isValidId(docId)
+        && isValidTeacherCustomQuestion(incoming())
+        && existing().ownerId == request.auth.uid
+        && incoming().id == existing().id
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'mode', 'difficulty', 'topic', 'timeLimitSec',
+          'ruleHint', 'explanation', 'questionData', 'sortOrder', 'updatedAt'
+        ]);
+
+      allow delete: if isVerified() && isValidId(docId) && existing().ownerId == request.auth.uid;
+    }
+
+    // ==================== COLLECTION 4: TRUSTED ADMIN REGISTRY ====================
+    match /admins/{adminId} {
+      allow get: if isVerified() && isValidId(adminId) && request.auth.uid == adminId;
+      allow list: if false;
+      allow create, update, delete: if false;
+    }
+  }
+}

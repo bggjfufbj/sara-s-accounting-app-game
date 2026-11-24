@@ -1,0 +1,155 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-sans: 'Vazirmatn', system-ui, -apple-system, sans-serif;
+    --font-serif: 'Amiri', Georgia, serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  }
+
+  html {
+    min-height: 100%;
+    font-family: var(--font-sans);
+    -webkit-text-size-adjust: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body {
+    min-height: 100dvh;
+    font-family: var(--font-sans);
+    overflow-x: clip;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #root {
+    min-height: 100dvh;
+  }
+
+  button,
+  a,
+  [role="button"] {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+.safe-area-shell {
+  min-height: 100dvh;
+  padding-top: max(1rem, env(safe-area-inset-top));
+  padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+}
+
+.font-display {
+  font-family: var(--font-serif);
+}
+
+.font-numeric {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Tactile emerald baize & mahogany ledger table surface */
+.felt-table-surface {
+  background-color: #0c3325;
+  background-image:
+    radial-gradient(ellipse 75% 60% at 50% 32%, rgba(25, 92, 67, 0.72) 0%, rgba(12, 51, 37, 0.94) 68%, rgba(7, 30, 22, 1) 100%),
+    repeating-linear-gradient(
+      45deg,
+      rgba(255, 255, 255, 0.014) 0px,
+      rgba(255, 255, 255, 0.014) 1px,
+      transparent 1px,
+      transparent 6px
+    );
+}
+
+.mahogany-frame {
+  box-shadow:
+    inset 0 0 0 1px rgba(212, 162, 67, 0.28),
+    inset 0 0 40px rgba(0, 0, 0, 0.45);
+}
+
+/* Ivory ledger parchment card */
+.ledger-paper {
+  background-color: #faf5ea;
+  color: #1c1813;
+  box-shadow:
+    0 14px 36px rgba(4, 18, 13, 0.38),
+    inset 0 0 0 1px rgba(139, 107, 52, 0.24);
+}
+
+.ledger-ruled {
+  background-image: linear-gradient(
+    to bottom,
+    transparent 31px,
+    rgba(24, 94, 72, 0.08) 31px,
+    rgba(24, 94, 72, 0.08) 32px
+  );
+  background-size: 100% 32px;
+}
+
+/* Compositor-only feedback animations */
+@keyframes scale-settle {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes stamp-press {
+  0% {
+    opacity: 0;
+    transform: scale(1.45) rotate(-10deg);
+  }
+  65% {
+    opacity: 1;
+    transform: scale(0.95) rotate(-4deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(-5deg);
+  }
+}
+
+@keyframes float-gentle {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.animate-settle {
+  animation: scale-settle 190ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-stamp {
+  animation: stamp-press 220ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-float-gentle {
+  animation: float-gentle 5.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-settle,
+  .animate-stamp,
+  .animate-float-gentle {
+    animation: none !important;
+  }
+}

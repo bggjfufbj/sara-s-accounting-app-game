@@ -1,0 +1,279 @@
+{
+  "entities": {
+    "CurriculumOverride": {
+      "title": "CurriculumOverride",
+      "description": "A teacher-edited override of a built-in Principles of Accounting curriculum question stored with native Firestore maps.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Curriculum question identifier matching the document ID."
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["mcq", "journal_entry", "debit_credit", "classify", "equation", "true_false"],
+          "description": "Game mode of the edited curriculum question."
+        },
+        "difficulty": {
+          "type": "string",
+          "enum": ["easy", "hard"],
+          "description": "Difficulty tier of the question."
+        },
+        "topic": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160,
+          "description": "Accounting syllabus chapter or topic label."
+        },
+        "timeLimitSec": {
+          "type": "number",
+          "description": "Round duration in seconds (10 to 120)."
+        },
+        "ruleHint": {
+          "type": "string",
+          "maxLength": 600,
+          "description": "Accounting principle hint shown to students."
+        },
+        "explanation": {
+          "type": "string",
+          "maxLength": 800,
+          "description": "Post-answer teaching explanation."
+        },
+        "questionData": {
+          "type": "object",
+          "description": "Native Firestore map containing mode-specific fields (prompt, options, debit/credit, classify items, equation slots, or claim)."
+        },
+        "isPublished": {
+          "type": "boolean",
+          "description": "Whether this curriculum override is active for the shared syllabus bank."
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "UID of the teacher/admin who authored the override."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the override was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the override was last updated."
+        }
+      },
+      "required": [
+        "id",
+        "mode",
+        "difficulty",
+        "topic",
+        "timeLimitSec",
+        "ruleHint",
+        "explanation",
+        "questionData",
+        "isPublished",
+        "ownerId",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "TeacherOverride": {
+      "title": "TeacherOverride",
+      "description": "A private curriculum question edit scoped to a specific authenticated teacher.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Curriculum question identifier being overridden."
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["mcq", "journal_entry", "debit_credit", "classify", "equation", "true_false"],
+          "description": "Game mode of the edited question."
+        },
+        "difficulty": {
+          "type": "string",
+          "enum": ["easy", "hard"],
+          "description": "Difficulty tier of the question."
+        },
+        "topic": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160,
+          "description": "Accounting topic label."
+        },
+        "timeLimitSec": {
+          "type": "number",
+          "description": "Round duration in seconds (10 to 120)."
+        },
+        "ruleHint": {
+          "type": "string",
+          "maxLength": 600,
+          "description": "Accounting principle hint."
+        },
+        "explanation": {
+          "type": "string",
+          "maxLength": 800,
+          "description": "Post-answer teaching explanation."
+        },
+        "questionData": {
+          "type": "object",
+          "description": "Native Firestore map of mode-specific question fields."
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "UID of the teacher who owns this private override."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of creation."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of last update."
+        }
+      },
+      "required": [
+        "id",
+        "mode",
+        "difficulty",
+        "topic",
+        "timeLimitSec",
+        "ruleHint",
+        "explanation",
+        "questionData",
+        "ownerId",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "TeacherCustomQuestion": {
+      "title": "TeacherCustomQuestion",
+      "description": "A custom accounting question authored or curated by an authenticated teacher.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Question identifier."
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["mcq", "journal_entry", "debit_credit", "classify", "equation", "true_false"],
+          "description": "Game mode of the custom question."
+        },
+        "difficulty": {
+          "type": "string",
+          "enum": ["easy", "hard"],
+          "description": "Difficulty tier."
+        },
+        "topic": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160,
+          "description": "Topic title."
+        },
+        "timeLimitSec": {
+          "type": "number",
+          "description": "Round duration in seconds (10 to 120)."
+        },
+        "ruleHint": {
+          "type": "string",
+          "maxLength": 600,
+          "description": "Rule hint text."
+        },
+        "explanation": {
+          "type": "string",
+          "maxLength": 800,
+          "description": "Teaching explanation."
+        },
+        "questionData": {
+          "type": "object",
+          "description": "Native Firestore map of mode-specific fields."
+        },
+        "sortOrder": {
+          "type": "number",
+          "description": "Zero-based display order in the teacher's custom question list."
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "UID of the teacher who owns this custom question."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of creation."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of last update."
+        }
+      },
+      "required": [
+        "id",
+        "mode",
+        "difficulty",
+        "topic",
+        "timeLimitSec",
+        "ruleHint",
+        "explanation",
+        "questionData",
+        "sortOrder",
+        "ownerId",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "AdminRecord": {
+      "title": "AdminRecord",
+      "description": "Trusted administrator marker document checked by Firestore security rules.",
+      "type": "object",
+      "properties": {
+        "role": {
+          "type": "string",
+          "enum": ["admin"],
+          "description": "Fixed admin role marker."
+        }
+      },
+      "required": ["role"]
+    }
+  },
+  "firestore": {
+    "/curriculum_overrides/{questionId}": {
+      "schema": { "$ref": "#/entities/CurriculumOverride" },
+      "description": "Published teacher-edited overrides of built-in Principles of Accounting curriculum questions."
+    },
+    "/teacher_overrides/{docId}": {
+      "schema": { "$ref": "#/entities/TeacherOverride" },
+      "description": "Private curriculum overrides owned by an individual authenticated teacher."
+    },
+    "/teacher_custom_questions/{docId}": {
+      "schema": { "$ref": "#/entities/TeacherCustomQuestion" },
+      "description": "Custom-authored accounting questions owned by an authenticated teacher."
+    },
+    "/admins/{adminId}": {
+      "schema": { "$ref": "#/entities/AdminRecord" },
+      "description": "Trusted server-managed admin allowlist."
+    }
+  }
+}
